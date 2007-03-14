@@ -1,0 +1,15 @@
+abstract: Handle Subtitle (.SRT) file with a callback
+author: Tatsuhiko Miyagawa <miyagawa@bulknews.net>
+build_requires: 
+  Test::More: 0
+distribution_type: module
+generated_by: Module::Install version 0.64
+license: perl
+name: Video-Subtitle-SRT
+no_index: 
+  directory: 
+    - inc
+    - t
+requires: 
+  PerlIO::eol: 0
+version: 0.01

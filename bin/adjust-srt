@@ -1,0 +1,110 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+use Video::Subtitle::SRT;
+use Pod::Usage;
+use POSIX;
+
+my %args;
+GetOptions(\%args,
+           "overwrite",
+           "timing=s",
+           "strip-tags") or pod2usage(2);
+
+my($orig, $temp, $tempfh);
+if ($args{overwrite}) {
+    $orig = $ARGV[0] or die "overwrite: filename is missing!\n";
+    $temp = "$orig.$$";
+    open $tempfh, ">", $temp;
+}
+
+my $callback = sub {
+    my $data = shift;
+
+    if ($args{'strip-tags'}) {
+        $data->{text} =~ s/<.*?>//g;
+    }
+
+    if ($args{timing}) {
+        my $sec = parse_sec($args{timing});
+        $data->{start_time} = sync_time($data->{start_time}, $sec);
+        $data->{end_time}   = sync_time($data->{end_time}, $sec);
+    }
+
+    if ($tempfh) {
+        print $tempfh serialize_out($data), "\r\n";
+    } else {
+        print STDOUT serialize_out($data), "\r\n";
+    }
+};
+
+my $subtitle = Video::Subtitle::SRT->new($callback);
+$subtitle->debug(1);
+$subtitle->parse($ARGV[0]);
+
+if ($tempfh) {
+    close $tempfh;
+    rename $temp, $orig;
+}
+
+sub parse_sec {
+    my $timing = shift;
+    if ($timing =~ /^[\+\-]?(\d+)(?:\.\d+)?$/) {
+        return eval $timing;
+    }
+    die "Unknown timing format: '$timing'";
+}
+
+sub sync_time {
+    my($time, $add) = @_;
+
+    if ($time =~ /^(\d\d):(\d\d):(\d\d)(?:,(\d*))?$/) {
+        my $sec = $1 * 60 * 60 + $2 * 60 + $3;
+        $sec += "0.$4" if $4;
+        $sec += $add;
+
+        my($hour, $min, $ss);
+        $min  = POSIX::floor($sec / 60);
+        $sec  = $sec - $min * 60; # don't use %
+        $hour = $min / 60;
+        $min  = $min % 60;
+
+        my $tmp = $sec;
+        $sec  = POSIX::floor($sec);
+        $ss   = substr(sprintf('%.03f', $tmp - $sec), 2);
+
+        return sprintf "%02d:%02d:%02d,%s", $hour, $min, $sec, $ss;
+    }
+
+    die "Can't parse the original time format: $time";
+}
+
+sub serialize_out {
+    my $data = shift;
+    my @text = split /\n/, $data->{text};
+    join "\r\n", $data->{number}, "$data->{start_time} --> $data->{end_time}", @text, "";
+}
+
+__END__
+
+=head1 NAME
+
+adjust-srt - adjust SRT timings and strip HTML tags (if necessary)
+
+=head1 SYNOPSIS
+
+    adjust-srt [options] input.srt
+
+      Options:
+        --overwrite:  overwrite the existing .srt file
+        --timing:     syncronize the timing
+        --strip-tags: Strip HTML tags in the subtitles
+
+    adjust-srt --timing +1.2 --overwrite foo.srt
+        Delays the subtitle 1.2 seconds and overwrite the existent foo.srt
+
+    adjust-srt --strip-tags --timing -3 foo.srt
+        Delays the subtitle -3 seconds and strip any HTML tags contained
+
+=cut
