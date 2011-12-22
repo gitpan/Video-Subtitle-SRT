@@ -1,11 +1,20 @@
-use inc::Module::Install;
-name 'Video-Subtitle-SRT';
-all_from 'lib/Video/Subtitle/SRT.pm';
+use strict;
+use warnings;
+use ExtUtils::MakeMaker;
 
-build_requires 'Test::More';
-requires 'PerlIO::eol';
-install_script 'bin/adjust-srt';
+my $pm = 'lib/Video/Subtitle/SRT.pm';
 
-use_test_base;
-auto_include;
-WriteAll;
+WriteMakefile (
+    NAME => 'Video::Subtitle::SRT',
+    VERSION_FROM => $pm,
+    ABSTRACT_FROM => $pm,
+    AUTHOR => 'Ben Bullock <bkb@cpan.org>',
+    LICENSE => 'perl',
+    PREREQ_PM => {
+        'PerlIO::eol' => 0,
+    },
+    EXE_FILES => [
+        'bin/adjust-srt',
+    ],
+);
+
