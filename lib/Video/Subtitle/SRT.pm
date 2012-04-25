@@ -4,7 +4,7 @@ require Exporter;
 @EXPORT_OK = qw/srt_time_to_milliseconds milliseconds_to_srt_time
                make_subtitle/;
 use strict;
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 use Carp;
 use PerlIO::eol;
@@ -112,8 +112,9 @@ sub make_subtitle
 {
     my ($data) = @_;
     my $output = "";
+    # Bug: should check that the output has all the fields here.
     $output .= $data->{number} . "\n";
-    $output .= $data->{start} . " --> " . $data->{end} . "\n";
+    $output .= $data->{start_time} . " --> " . $data->{end_time} . "\n";
     $output .= $data->{text} . "\n";
     $output .= "\n";
     return $output;
