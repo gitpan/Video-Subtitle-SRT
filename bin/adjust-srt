@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/home/ben/software/install/bin/perl
 use strict;
 use warnings;
 use Getopt::Long;
@@ -34,7 +34,8 @@ my $callback = sub {
 
     if ($tempfh) {
         print $tempfh serialize_out($data), "\r\n";
-    } else {
+    }
+    else {
         print STDOUT serialize_out($data), "\r\n";
     }
 };
@@ -42,6 +43,7 @@ my $callback = sub {
 my $subtitle = Video::Subtitle::SRT->new($callback);
 $subtitle->debug(1);
 $subtitle->parse($ARGV[0]);
+exit;
 
 if ($tempfh) {
     close $tempfh;

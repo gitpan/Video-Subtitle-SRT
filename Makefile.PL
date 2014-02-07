@@ -3,6 +3,8 @@ use warnings;
 use ExtUtils::MakeMaker;
 
 my $pm = 'lib/Video/Subtitle/SRT.pm';
+my $repo = 'https://github.com/benkasminbullock/Video-Subtitle-SRT';
+
 
 WriteMakefile (
     NAME => 'Video::Subtitle::SRT',
@@ -11,10 +13,17 @@ WriteMakefile (
     AUTHOR => 'Ben Bullock <bkb@cpan.org>',
     LICENSE => 'perl',
     PREREQ_PM => {
-        'PerlIO::eol' => 0,
     },
     EXE_FILES => [
         'bin/adjust-srt',
     ],
+    META_MERGE => {
+        resources => {
+            repository => $repo,
+            bugtracker => "$repo/issues",
+        },
+    },
+    MIN_PERL_VERSION => '5.006001',
+    LICENSE => 'perl',
 );
 

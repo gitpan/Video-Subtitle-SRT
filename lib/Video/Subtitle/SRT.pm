@@ -2,12 +2,14 @@ package Video::Subtitle::SRT;
 require Exporter;
 @ISA = qw(Exporter);
 @EXPORT_OK = qw/srt_time_to_milliseconds milliseconds_to_srt_time
-               make_subtitle/;
+		make_subtitle/;
+%EXPORT_TAGS = (
+    all => \@EXPORT_OK,
+);
 use strict;
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 use Carp;
-use PerlIO::eol;
 use POSIX 'floor';
 use Carp;
 
@@ -15,6 +17,8 @@ sub new {
     my ($class, $callback) = @_;
     bless { callback => $callback }, $class;
 }
+
+# Turn on/off debugging; return value is current debugging value.
 
 sub debug
 {
@@ -33,14 +37,17 @@ sub parse
     else {
         open my $fh, "<", $stuff or croak "$stuff: $!";
         $self->parse_fh($fh);
+	close $fh or die $!;
     }
 }
+
+# Read the SRT from file handle $fh.
 
 sub parse_fh
 {
     my ($self, $fh) = @_;
 
-    binmode $fh, ":raw:eol(LF)";
+    binmode $fh, ":raw:crlf";
     local $/ = "\n\n";
     while (my $chunk = <$fh>) {
         my @chunk = split /\r?\n/, $chunk;
@@ -50,7 +57,9 @@ sub parse_fh
 
         my $data = $self->parse_chunk(\@chunk, $chunk);
         if ($self->{callback}) {
-            eval { $self->{callback}->($data) };
+            eval {
+		$self->{callback}->($data)
+	    };
             warn $@ if $@ && $self->{debug};
             return if $@;
         }
@@ -185,6 +194,58 @@ Video::Subtitle::SRT is a callback based parser to parse SubRip
 subtitle files (.SRT). See L<bin/adjust-srt> how to use this module to
 create subtitle delay adjusting tools.
 
+=head1 METHODS
+
+=head2 new
+
+    my $srt_wranger = Video::Subtitle::SRT->new (\& function);
+
+The argument is the function to call back when parsing.
+
+The callback function takes one argument, a hash reference where the
+hash has the following fields. 
+
+=over
+
+=item start_time
+
+The start time of the subtitle, as a text string, in the SRT time
+format. This may be converted into a time in milliseconds from the
+start of the video using L</srt_time_to_milliseconds>.
+
+=item end_time
+
+The end time of the subtitle, as a text string, in the SRT time
+format. This may be converted into a time in milliseconds from the
+start of the video using L</srt_time_to_milliseconds>.
+
+=item text
+
+The text of the subtitle.
+
+=item number
+
+The number of the subtitle.
+
+=back
+
+It does not need to return any value. It can die on error to halt
+parsing.
+
+=head2 parse
+
+Parse a file handle,
+
+    open my $fh, "<", 'movie.srt' or die $!;
+    $srt_wrangler->parse ($fh);    
+    close $fh or die $!;
+
+or a file
+
+    $srt_wrangler->parse ('movie.srt');
+
+Parse the subtitle file and call the callback specified in L</new>.
+
 =head1 FUNCTIONS
 
 =head2 srt_time_to_milliseconds
@@ -197,8 +258,11 @@ Convert a time in milliseconds into an SRT time.
 
 =head2 make_subtitle
 
-Given a subtitle {data => 'Words', start_time => srt_time, end_time =>
-srt_time} make that into an SRT subtitle time.
+    my $srt = make_subtitle (\%data);
+
+Given a subtitle containing the fields C<{number => 1, text =>
+'Words', start_time => srt_time, end_time => srt_time}> make it into
+an SRT subtitle time.
 
 =head2 add
 
@@ -214,14 +278,20 @@ Write the file of subtitles to STDOUT.
 
 =head1 EXPORTS
 
-Exports on request: L</srt_time_to_milliseconds>,
-L</milliseconds_to_srt_time>, L</make_subtitle>;
+Video::Subtitle::SRT exports the following functions on request:
+L</srt_time_to_milliseconds>, L</milliseconds_to_srt_time>, and
+L</make_subtitle>. All the functions can be exported using the tag
+<code>:all</code>:
+
+    use Video::Subtitle::SRT ':all';
 
 =head1 SEE ALSO
 
 =over
 
 =item L<http://en.wikipedia.org/wiki/SubRip> 
+
+This explains the format.
 
 =item L<http://www.opensubtitles.org/>
 

@@ -1,0 +1,12 @@
+0.04 2014-02-07
+
+* Add "Changes", "README", minimum Perl version.
+* Remove dependence on PerlIO::eol, replaced with crlf IO layer.
+
+0.03 2012-04-25
+
+* Change of maintainer (MIYAGAWA -> BKB)
+
+0.01 2007-03-14
+
+* Initial release
