@@ -7,7 +7,8 @@ require Exporter;
     all => \@EXPORT_OK,
 );
 use strict;
-our $VERSION = '0.04';
+use warnings;
+our $VERSION = '0.05';
 
 use Carp;
 use POSIX 'floor';
@@ -121,6 +122,11 @@ sub make_subtitle
 {
     my ($data) = @_;
     my $output = "";
+    for my $field (qw/number start_time end_time text/) {
+	if (! $data->{$field}) {
+	    croak "Missing $field";
+	}
+    }
     # Bug: should check that the output has all the fields here.
     $output .= $data->{number} . "\n";
     $output .= $data->{start_time} . " --> " . $data->{end_time} . "\n";
@@ -191,8 +197,9 @@ Video::Subtitle::SRT - manipulate SRT subtitle files
 =head1 DESCRIPTION
 
 Video::Subtitle::SRT is a callback based parser to parse SubRip
-subtitle files (.SRT). See L<bin/adjust-srt> how to use this module to
-create subtitle delay adjusting tools.
+subtitle files (.SRT). See the script F<adjust-srt> in the
+distribution for how to use this module to create subtitle delay
+adjusting tools.
 
 =head1 METHODS
 
@@ -202,8 +209,8 @@ create subtitle delay adjusting tools.
 
 The argument is the function to call back when parsing.
 
-The callback function takes one argument, a hash reference where the
-hash has the following fields. 
+The callback function takes one argument, a hash reference. The hash
+has the following fields:
 
 =over
 
@@ -260,9 +267,10 @@ Convert a time in milliseconds into an SRT time.
 
     my $srt = make_subtitle (\%data);
 
-Given a subtitle containing the fields C<{number => 1, text =>
-'Words', start_time => srt_time, end_time => srt_time}> make it into
-an SRT subtitle time.
+Given a subtitle containing the fields C<< {number => 1, text =>
+'Words', start_time => srt_time, end_time => srt_time} >>, make it
+into an SRT subtitle. The return value is the subtitle. If any of the
+fields is missing, this emits a fatal error.
 
 =head2 add
 

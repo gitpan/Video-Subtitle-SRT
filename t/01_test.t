@@ -1,4 +1,4 @@
-use Test::More tests => 3;
+use Test::More;
 use Video::Subtitle::SRT 'make_subtitle';
 use FindBin;
 
@@ -27,9 +27,18 @@ for my $file (@files) {
 }
 
 my $subtitle = make_subtitle ({
+    number => 1,
     start_time => $start,
     end_time => $end,
     text => 'TM',
 });
 #print "$subtitle\n";
 like ($subtitle, qr/\Q$start\E --> \Q$end\E/, "Test output of subtitles");
+
+eval {
+    make_subtitle ({});
+};
+ok ($@);
+like ($@, qr/missing/i, "Check failing");
+
+done_testing ();

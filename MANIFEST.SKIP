@@ -4,3 +4,4 @@
 ^\.gitignore$
 ^blib/.*
 ^MYMETA\.(json|yml)$
+^Makefile$
